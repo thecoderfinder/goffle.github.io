@@ -46,7 +46,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%);
+            background: linear-gradient(135deg, #2d2d2d 0%, #3d3d2d 100%);
             color: #e2e8f0;
             font-family: 'Arial', sans-serif;
             overflow-x: hidden;
@@ -1022,13 +1022,29 @@
             sendNotification('Upload Complete', `Files uploaded with code: ${sharingCode} (${totalSize.toFixed(2)} GB)`);
         }
 
-        function accessSharedFiles() {
+        async function accessSharedFiles() {
             const sharingCodeInput = document.getElementById('sharingCodeInput');
             const sharedFileList = document.getElementById('sharedFileList');
             const sharedFilesSection = document.querySelector('.shared-files');
             const code = sharingCodeInput.value.trim();
-            if (sharedFiles[code] || (db && sharedFiles[code] === undefined)) {
-                getAllSharedFiles().then(files => {
+
+            // Try API validation first
+            try {
+                const response = await fetch(`http://localhost:8080/api/validate-code?code=${code}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.valid) {
+                    throw new Error('Invalid code from API');
+                }
+
+                // If API validates, proceed with local data
+                if (sharedFiles[code] || (db && sharedFiles[code] === undefined)) {
+                    const files = await getAllSharedFiles();
                     if (files[code]) {
                         sharedFilesSection.classList.remove('hidden');
                         sharedFileList.innerHTML = '';
@@ -1039,9 +1055,34 @@
                             sharedFileList.appendChild(li);
                         });
                         sendNotification('Files Accessed', `Accessed files with code: ${code}`);
-                    } else alert('Invalid code');
-                }).catch(err => { console.error('Failed to fetch:', err); alert('Invalid code or error'); });
-            } else alert('Invalid code');
+                    } else {
+                        alert('Invalid code');
+                    }
+                } else {
+                    alert('Invalid code');
+                }
+            } catch (error) {
+                console.warn('API validation failed, falling back to local check:', error.message);
+                // Fallback to local IndexedDB check if API fails
+                if (sharedFiles[code] || (db && sharedFiles[code] === undefined)) {
+                    const files = await getAllSharedFiles();
+                    if (files[code]) {
+                        sharedFilesSection.classList.remove('hidden');
+                        sharedFileList.innerHTML = '';
+                        files[code].forEach(file => {
+                            const li = document.createElement('div');
+                            li.className = 'file-item';
+                            li.innerHTML = `${file.name} (${file.size ? file.size.toFixed(2) : '0'} GB) <a href="#">Download ⬇️</a>`;
+                            sharedFileList.appendChild(li);
+                        });
+                        sendNotification('Files Accessed', `Accessed files with code: ${code} (local fallback)`);
+                    } else {
+                        alert('Invalid code');
+                    }
+                } else {
+                    alert('Invalid code and no local data found');
+                }
+            }
         }
 
         function accessAdmin() {
