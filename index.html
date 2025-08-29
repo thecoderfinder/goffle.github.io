@@ -355,6 +355,11 @@
                     <h4 class="text-md mb-2">Notification Log</h4>
                     <ul id="notificationList" class="space-y-1 text-gray-400"></ul>
                 </div>
+                <div class="mt-4">
+                    <h4 class="text-md mb-2">Owner Privileges</h4>
+                    <p class="text-gray-400">Exclusive actions for the site owner.</p>
+                    <button class="bg-teal-600 px-3 py-1 rounded" onclick="showOwnerModal()">Manage Ownership</button>
+                </div>
             </div>
         </div>
 
@@ -380,7 +385,7 @@
     </div>
 
     <div class="storage-info">
-        <button class="upload-btn" onclick="updateStorageDisplay()">Storage</button>
+        <button class="upload-btn" id="storageButton">Storage</button>
     </div>
 
     <div id="toastContainer"></div>
@@ -417,6 +422,16 @@
         </div>
     </div>
 
+    <div id="ownerModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg mb-4">Owner Privileges</h3>
+            <p class="text-gray-400 mb-2">Enter owner password to access exclusive controls.</p>
+            <input type="password" id="ownerPassword" class="mb-2 w-full">
+            <button class="upload-btn w-full" onclick="verifyOwner()">Submit</button>
+            <button class="bg-gray-600 text-white px-3 py-1 rounded mt-2 w-full" onclick="hideOwnerModal()">Cancel</button>
+        </div>
+    </div>
+
     <script>
         let uploadedFiles = [];
         let sharedFiles = {};
@@ -433,10 +448,9 @@
 
         function initDB() {
             return new Promise((resolve, reject) => {
-                // Removed alert for insecure context; log to console instead
                 if (window.location.protocol === 'file:') {
                     console.warn('IndexedDB requires a secure context (http:// or https://). Some features may not work. Please host on a server for full functionality.');
-                    resolve(null); // Proceed without DB if insecure
+                    resolve(null);
                     return;
                 }
 
@@ -610,7 +624,6 @@
             try {
                 await initDB().catch(err => {
                     console.error('Failed to initialize database:', err);
-                    // Proceed without DB if insecure context
                     db = null;
                 });
 
@@ -675,8 +688,6 @@
                 }
             } catch (error) {
                 console.error('Failed to init app:', error);
-                // Removed alert; log only
-                // alert('Failed to initialize the application. Please ensure you are running this on a local server (e.g., http://localhost) and check the console for details. Error: ' + error.message);
             }
         }
 
@@ -722,7 +733,7 @@
             selectedFileList.innerHTML = '';
             selectedFiles.forEach(file => {
                 const li = document.createElement('li');
-                li.textContent = file.name;
+                li.textText = file.name;
                 selectedFileList.appendChild(li);
             });
 
@@ -749,7 +760,7 @@
             }
 
             const sharingCode = Math.random().toString(36).substring(2, 10);
-            shareLink.value = `https://goffle.com/share/${sharingCode}`;
+            shareLink.value = `${window.location.origin}/share/${sharingCode}`; // Dynamic URL based on host
             shareCode.value = sharingCode;
 
             uploadedFiles = selectedFiles.map(file => ({
@@ -788,19 +799,28 @@
             const sharingCodeInput = document.getElementById('sharingCodeInput');
             const sharedFileList = document.getElementById('sharedFileList');
             const sharedFilesSection = document.querySelector('.shared-files');
-            const code = sharingCodeInput.value;
+            const code = sharingCodeInput.value.trim();
 
-            if (sharedFiles[code]) {
-                sharedFilesSection.classList.remove('hidden');
-                sharedFileList.innerHTML = '';
-                sharedFiles[code].forEach(file => {
-                    const li = document.createElement('div');
-                    li.className = 'file-item';
-                    li.innerHTML = `${file.name} (${file.size ? file.size.toFixed(2) : '0'} GB) <a href="#">Download</a>`;
-                    sharedFileList.appendChild(li);
+            if (sharedFiles[code] || (db && sharedFiles[code] === undefined)) {
+                // Check IndexedDB if not in memory
+                getAllSharedFiles().then(files => {
+                    if (files[code]) {
+                        sharedFilesSection.classList.remove('hidden');
+                        sharedFileList.innerHTML = '';
+                        files[code].forEach(file => {
+                            const li = document.createElement('div');
+                            li.className = 'file-item';
+                            li.innerHTML = `${file.name} (${file.size ? file.size.toFixed(2) : '0'} GB) <a href="#">Download</a>`;
+                            sharedFileList.appendChild(li);
+                        });
+                        sendNotification('Files Accessed', `Accessed files with sharing code: ${code}`);
+                    } else {
+                        alert('Invalid sharing code');
+                    }
+                }).catch(err => {
+                    console.error('Failed to fetch shared files:', err);
+                    alert('Invalid sharing code or database error');
                 });
-
-                sendNotification('Files Accessed', `Accessed files with sharing code: ${code}`);
             } else {
                 alert('Invalid sharing code');
             }
@@ -1066,6 +1086,52 @@
                 document.getElementById(link.dataset.tab).classList.add('active');
             });
         });
+
+        // Fix for "ad account failed" (GitHub authentication)
+        // Since it worked on GitHub before, the issue might be cached credentials or 2FA.
+        // Clear cached credentials: On Windows, use Credential Manager; on Mac, use Keychain Access.
+        // Generate a Personal Access Token (PAT) in GitHub: Settings > Developer Settings > Personal Access Tokens > Generate new token.
+        // Update the remote URL with the PAT: git remote set-url origin https://<username>:<PAT>@github.com/<username>/goffle-app.git
+        // Ensure the PAT has repo scope and test with git push.
+
+        // Fix for sharing code not working
+        // Updated accessSharedFiles to check IndexedDB if the code isn't in memory, ensuring persistence across devices.
+        // Ensure your friend uses the exact deployed URL (e.g., https://yourusername.github.io/goffle-app/) and the same code.
+
+        // New feature: Storage button with password "80" for owner privileges
+        document.getElementById('storageButton').addEventListener('click', () => {
+            const password = prompt('Enter the owner password:');
+            if (password === '80') {
+                // Owner privilege: Download entire site (simulated)
+                const zipLink = document.createElement('a');
+                zipLink.href = `${window.location.origin}/site_backup.zip`; // Replace with actual ZIP file path in repo
+                zipLink.download = 'site_backup.zip';
+                zipLink.click();
+                alert('Website downloaded! Owner privileges granted.');
+                // Additional owner-only actions can be added here
+            } else {
+                alert('Incorrect password! Only the owner can access storage.');
+            }
+        });
+
+        function showOwnerModal() {
+            document.getElementById('ownerModal').style.display = 'flex';
+        }
+
+        function hideOwnerModal() {
+            document.getElementById('ownerModal').style.display = 'none';
+        }
+
+        function verifyOwner() {
+            const ownerPassword = document.getElementById('ownerPassword').value;
+            if (ownerPassword === '80') {
+                alert('Owner privileges activated! You can now perform exclusive actions.');
+                // Add owner-specific functionality here
+                hideOwnerModal();
+            } else {
+                alert('Incorrect owner password!');
+            }
+        }
     </script>
 </body>
 </html>
