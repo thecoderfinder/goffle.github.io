@@ -46,7 +46,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #2d2d2d 0%, #3d3d2d 100%);
+            background: linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%);
             color: #e2e8f0;
             font-family: 'Arial', sans-serif;
             overflow-x: hidden;
@@ -255,7 +255,7 @@
         body.hacker .file-item a:hover {
             color: #00ff00;
         }
-        input[type="text"], input[type="password"], input[type="number"] {
+        input[type="text"], input[type="password"] {
             background: #4a5568;
             border: 2px solid #718096;
             border-radius: 12px;
@@ -264,27 +264,27 @@
             outline: 2px solid #718096;
             font-size: 1.1em;
         }
-        body.light input[type="text"], body.light input[type="password"], body.light input[type="number"] {
+        body.light input[type="text"], body.light input[type="password"] {
             background: #ffffff;
             border-color: #a0aec0;
             color: #2d3748;
             outline-color: #a0aec0;
         }
-        body.hacker input[type="text"], body.hacker input[type="password"], body.hacker input[type="number"] {
+        body.hacker input[type="text"], body.hacker input[type="password"] {
             background: #000000;
             border-color: #00ff00;
             color: #00ff00;
             outline-color: #00ff00;
         }
-        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
+        input[type="text"]:focus, input[type="password"]:focus {
             border-color: #63b3ed;
             outline: 2px solid #63b3ed;
         }
-        body.light input[type="text"]:focus, body.light input[type="password"]:focus, body.light input[type="number"]:focus {
+        body.light input[type="text"]:focus, body.light input[type="password"]:focus {
             border-color: #4299e1;
             outline-color: #4299e1;
         }
-        body.hacker input[type="text"]:focus, body.hacker input[type="password"]:focus, body.hacker input[type="number"]:focus {
+        body.hacker input[type="text"]:focus, body.hacker input[type="password"]:focus {
             border-color: #00cc00;
             outline-color: #00cc00;
         }
@@ -439,17 +439,44 @@
         body.hacker .theme-btn:hover {
             background: #002200;
         }
-        #notification {
+        .global-notification {
             display: none;
             position: fixed;
-            top: 20px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            background: #ff4444;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1000;
+            transform: translate(-50%, -50%);
+            background: #4a5568;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            text-align: center;
+        }
+        body.light .global-notification {
+            background: #ffffff;
+            color: #2d3748;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        body.hacker .global-notification {
+            background: #000000;
+            color: #00ff00;
+            box-shadow: none;
+        }
+        .activity-dashboard {
+            margin-top: 28px;
+            background: #4a5568;
+            padding: 18px;
+            border-radius: 14px;
+            outline: 2px solid #718096;
+        }
+        body.light .activity-dashboard {
+            background: #ffffff;
+            outline-color: #a0aec0;
+        }
+        body.hacker .activity-dashboard {
+            background: #000000;
+            outline-color: #00ff00;
         }
     </style>
 </head>
@@ -510,6 +537,11 @@
                 <h3 class="text-lg mb-2">Your Files</h3>
                 <button class="bg-gray-700 text-white px-4 py-2 rounded mb-2" onclick="clearAllFiles()">Clear All</button>
                 <ul id="fileList" class="space-y-2"></ul>
+            </div>
+            <div class="activity-dashboard" id="activityDashboard">
+                <h3 class="text-lg mb-2">User Activity</h3>
+                <p id="activeUsers">Active Users: 0</p>
+                <p id="pageVisits">Page Visits: 0</p>
             </div>
         </div>
 
@@ -608,7 +640,6 @@
                     <h4 class="text-md mb-2">Full System Reset</h4>
                     <button class="bg-red-600 px-4 py-2 rounded" onclick="resetSystem()">Reset System</button>
                     <p class="text-gray-400 mt-2">Completely wipes all data and resets the app.</p>
-                    <div id="resetLog" class="mt-2 text-gray-400"></div>
                 </div>
                 <div class="mt-4">
                     <h4 class="text-md mb-2">Advanced Backup</h4>
@@ -619,7 +650,6 @@
                     <h4 class="text-md mb-2">Server Configuration</h4>
                     <button class="bg-purple-700 px-4 py-2 rounded" onclick="configureServer()">Configure Server</button>
                     <p class="text-gray-400 mt-2">Adjust server settings (simulated).</p>
-                    <div id="serverStatus" class="mt-2 text-gray-400">Status: Idle</div>
                 </div>
                 <div class="mt-4">
                     <h4 class="text-md mb-2">Delete User</h4>
@@ -636,7 +666,7 @@
                 <div class="mt-4">
                     <h4 class="text-md mb-2">Custom Notification</h4>
                     <input type="text" id="customNotification" placeholder="Enter message" class="mb-2">
-                    <button class="bg-indigo-700 px-4 py-2 rounded" onclick="sendCustomNotification()">Send to All</button>
+                    <button class="bg-indigo-700 px-4 py-2 rounded" onclick="sendCustomNotification()">Send</button>
                     <p class="text-gray-400 mt-2">Broadcast a custom notification to all users.</p>
                 </div>
                 <div class="mt-4">
@@ -645,24 +675,27 @@
                     <p class="text-gray-400 mt-2">Compress and reorganize database storage.</p>
                 </div>
                 <div class="mt-4">
-                    <h4 class="text-md mb-2">User Activity Log</h4>
-                    <button class="bg-teal-600 px-4 py-2 rounded" onclick="viewActivityLog()">View Log</button>
-                    <div id="activityLog" class="mt-2 text-gray-400"></div>
-                </div>
-                <div class="mt-4">
-                    <h4 class="text-md mb-2">Assign Custom Role</h4>
+                    <h4 class="text-md mb-2">User Role Management</h4>
                     <input type="text" id="roleUsername" placeholder="Enter username" class="mb-2">
-                    <input type="text" id="roleName" placeholder="Enter role" class="mb-2">
+                    <select id="roleSelect" class="mb-2 p-2 bg-gray-700 text-white rounded">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="owner">Owner</option>
+                    </select>
                     <button class="bg-purple-600 px-4 py-2 rounded" onclick="assignRole()">Assign Role</button>
-                    <div id="roleStatus" class="mt-2 text-gray-400"></div>
+                    <p class="text-gray-400 mt-2">Set or update user roles (requires password verification).</p>
                 </div>
                 <div class="mt-4">
-                    <h4 class="text-md mb-2">File Encryption/Decryption</h4>
-                    <input type="file" id="encryptFile" class="mb-2">
-                    <input type="number" id="shiftKey" placeholder="Shift key (1-25)" class="mb-2" min="1" max="25">
-                    <button class="bg-green-600 px-4 py-2 rounded" onclick="encryptFile()">Encrypt</button>
-                    <button class="bg-red-600 px-4 py-2 rounded" onclick="decryptFile()">Decrypt</button>
-                    <div id="cryptoStatus" class="mt-2 text-gray-400"></div>
+                    <h4 class="text-md mb-2">Broadcast Global Notification</h4>
+                    <input type="text" id="globalMessage" placeholder="Enter global message" class="mb-2">
+                    <button class="bg-green-800 px-4 py-2 rounded" onclick="broadcastNotification()">Send to All</button>
+                    <p class="text-gray-400 mt-2">Send a pop-up message to all active users.</p>
+                </div>
+                <div class="mt-4">
+                    <h4 class="text-md mb-2">Server Status Monitor</h4>
+                    <button class="bg-blue-800 px-4 py-2 rounded" onclick="checkServerStatus()">Check Status</button>
+                    <p id="serverStatus" class="text-gray-400 mt-2">Status: Not checked</p>
+                    <p class="text-gray-400 mt-2">Monitor server health and uptime (simulated).</p>
                 </div>
             </div>
         </div>
@@ -693,7 +726,11 @@
     </div>
 
     <div id="toastContainer"></div>
-    <div id="notification"></div>
+
+    <div id="globalNotification" class="global-notification">
+        <p id="globalMessageText"></p>
+        <button class="bg-gray-600 text-white px-4 py-2 rounded mt-2" onclick="hideGlobalNotification()">Close</button>
+    </div>
 
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -739,11 +776,11 @@
         let isPremium = localStorage.getItem('isPremium') === 'true' || false;
         let storageUsed = 0;
         let maxStorage = isPremium ? 10 : 5;
-        let globalStorageLimit = 50;
-        let adStorageBonus = 0;
-        let activityLog = [];
+        let globalStorageLimit = 50; // Default global limit
+        let adStorageBonus = 0; // Tracks ad-based storage bonus per session
         let db;
-        let ws;
+        let activeUsers = new Set();
+        let pageVisitCount = 0;
 
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -752,23 +789,48 @@
                     resolve(null);
                     return;
                 }
-                const request = indexedDB.open('GoffleDB', 6);
+
+                const request = indexedDB.open('GoffleDB', 6); // Updated version to 6
+
                 request.onupgradeneeded = (event) => {
                     db = event.target.result;
                     try {
-                        if (!db.objectStoreNames.contains('sharedFiles')) db.createObjectStore('sharedFiles', { keyPath: 'code' });
-                        if (!db.objectStoreNames.contains('notifications')) db.createObjectStore('notifications', { keyPath: 'id', autoIncrement: true });
-                        if (!db.objectStoreNames.contains('users')) db.createObjectStore('users', { keyPath: 'username' });
-                        if (!db.objectStoreNames.contains('userData')) db.createObjectStore('userData', { keyPath: 'username' });
-                        if (!db.objectStoreNames.contains('activity')) db.createObjectStore('activity', { keyPath: 'id', autoIncrement: true });
+                        if (!db.objectStoreNames.contains('sharedFiles')) {
+                            db.createObjectStore('sharedFiles', { keyPath: 'code' });
+                        }
+                        if (!db.objectStoreNames.contains('notifications')) {
+                            db.createObjectStore('notifications', { keyPath: 'id', autoIncrement: true });
+                        }
+                        if (!db.objectStoreNames.contains('users')) {
+                            db.createObjectStore('users', { keyPath: 'username' });
+                        }
+                        if (!db.objectStoreNames.contains('userData')) {
+                            db.createObjectStore('userData', { keyPath: 'username' });
+                        }
+                        // Ensure share code validity tracking
+                        if (!db.objectStoreNames.contains('shareCodeValidity')) {
+                            db.createObjectStore('shareCodeValidity', { keyPath: 'code', autoIncrement: false });
+                        }
                     } catch (e) {
                         console.error('Upgrade error:', e);
                         reject(e);
                     }
                 };
-                request.onsuccess = (event) => { db = event.target.result; resolve(db); };
-                request.onerror = (event) => { console.error('Database error:', event.target.error); reject(event.target.error); };
-                request.onblocked = (event) => { console.warn('Database blocked'); reject(new Error('Database blocked')); };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+
+                request.onerror = (event) => {
+                    console.error('Database error:', event.target.error);
+                    reject(event.target.error);
+                };
+
+                request.onblocked = (event) => {
+                    console.warn('Database initialization blocked. Please close other tabs with this app open.');
+                    reject(new Error('Database blocked'));
+                };
             });
         }
 
@@ -777,15 +839,43 @@
             const transaction = db.transaction(['sharedFiles'], 'readonly');
             const store = transaction.objectStore('sharedFiles');
             const request = store.getAll();
-            return new Promise((resolve) => { request.onsuccess = () => { const files = {}; request.result.forEach(item => files[item.code] = item.files || []); resolve(files); }; });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => {
+                    const files = {};
+                    request.result.forEach(item => {
+                        files[item.code] = item.files || [];
+                    });
+                    resolve(files);
+                };
+                request.onerror = reject;
+            });
         }
 
         async function saveSharedFile(code, files) {
             if (!db) return Promise.resolve();
-            const transaction = db.transaction(['sharedFiles'], 'readwrite');
-            const store = transaction.objectStore('sharedFiles');
-            const request = store.put({ code, files });
-            return new Promise((resolve) => { request.onsuccess = resolve; });
+            const transaction = db.transaction(['sharedFiles', 'shareCodeValidity'], 'readwrite');
+            const fileStore = transaction.objectStore('sharedFiles');
+            const validityStore = transaction.objectStore('shareCodeValidity');
+            const request = fileStore.put({ code, files });
+            validityStore.put({ code, validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }); // Valid for 30 days
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = resolve;
+                request.onerror = reject;
+            });
+        }
+
+        async function getShareCodeValidity(code) {
+            if (!db) return null;
+            const transaction = db.transaction(['shareCodeValidity'], 'readonly');
+            const store = transaction.objectStore('shareCodeValidity');
+            const request = store.get(code);
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = reject;
+            });
         }
 
         async function getNotificationLog() {
@@ -793,7 +883,11 @@
             const transaction = db.transaction(['notifications'], 'readonly');
             const store = transaction.objectStore('notifications');
             const request = store.getAll();
-            return new Promise((resolve) => { request.onsuccess = () => resolve(request.result.map(item => item.log) || []); });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result.map(item => item.log) || []);
+                request.onerror = reject;
+            });
         }
 
         async function addNotification(log) {
@@ -801,7 +895,11 @@
             const transaction = db.transaction(['notifications'], 'readwrite');
             const store = transaction.objectStore('notifications');
             const request = store.add({ log });
-            return new Promise((resolve) => { request.onsuccess = resolve; });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = resolve;
+                request.onerror = reject;
+            });
         }
 
         async function getUsers() {
@@ -809,15 +907,29 @@
             const transaction = db.transaction(['users'], 'readonly');
             const store = transaction.objectStore('users');
             const request = store.getAll();
-            return new Promise((resolve) => { request.onsuccess = () => { const userDict = {}; request.result.forEach(user => userDict[user.username] = user.password || ''); resolve(userDict); }; });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => {
+                    const userDict = {};
+                    request.result.forEach(user => {
+                        userDict[user.username] = user.password || '';
+                    });
+                    resolve(userDict);
+                };
+                request.onerror = reject;
+            });
         }
 
-        async function addUserToDB(username, password) {
+        async function addUserToDB(username, password, role = 'user') {
             if (!db) return Promise.resolve();
             const transaction = db.transaction(['users'], 'readwrite');
             const store = transaction.objectStore('users');
-            const request = store.put({ username, password });
-            return new Promise((resolve) => { request.onsuccess = resolve; });
+            const request = store.put({ username, password, role });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = resolve;
+                request.onerror = reject;
+            });
         }
 
         async function deleteUserFromDB(username) {
@@ -825,7 +937,11 @@
             const transaction = db.transaction(['users'], 'readwrite');
             const store = transaction.objectStore('users');
             const request = store.delete(username);
-            return new Promise((resolve) => { request.onsuccess = resolve; });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = resolve;
+                request.onerror = reject;
+            });
         }
 
         async function getUserData(username) {
@@ -833,7 +949,11 @@
             const transaction = db.transaction(['userData'], 'readonly');
             const store = transaction.objectStore('userData');
             const request = store.get(username);
-            return new Promise((resolve) => { request.onsuccess = () => resolve(request.result || { storageUsed: 0, isPremium: false, role: 'user' }); });
+
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result || { storageUsed: 0, isPremium: false, role: 'user' });
+                request.onerror = reject;
+            });
         }
 
         async function saveUserData(username, data) {
@@ -841,28 +961,16 @@
             const transaction = db.transaction(['userData'], 'readwrite');
             const store = transaction.objectStore('userData');
             const request = store.put({ username, ...data });
-            return new Promise((resolve) => { request.onsuccess = resolve; });
-        }
 
-        async function addActivityLog(action) {
-            if (!db) return Promise.resolve();
-            const transaction = db.transaction(['activity'], 'readwrite');
-            const store = transaction.objectStore('activity');
-            const request = store.add({ action, timestamp: new Date().toISOString() });
-            return new Promise((resolve) => { request.onsuccess = resolve; });
-        }
-
-        async function getActivityLog() {
-            if (!db) return [];
-            const transaction = db.transaction(['activity'], 'readonly');
-            const store = transaction.objectStore('activity');
-            const request = store.getAll();
-            return new Promise((resolve) => { request.onsuccess = () => resolve(request.result.map(item => item.action + ' at ' + item.timestamp) || []); });
+            return new Promise((resolve, reject) => {
+                request.onsuccess = resolve;
+                request.onerror = reject;
+            });
         }
 
         async function clearStorage() {
             if (!db) return;
-            const stores = ['sharedFiles', 'notifications', 'activity'];
+            const stores = ['sharedFiles', 'notifications', 'shareCodeValidity'];
             for (const storeName of stores) {
                 const transaction = db.transaction([storeName], 'readwrite');
                 const store = transaction.objectStore(storeName);
@@ -870,32 +978,47 @@
             }
             sharedFiles = {};
             notificationLog = [];
-            activityLog = [];
             storageUsed = 0;
             await saveUserData(currentUser, { storageUsed: 0, isPremium });
             updateStorageDisplay();
             updateNotificationLog();
-            updateActivityLog();
             alert('Storage cleared!');
             sendNotification('Storage Cleared', 'All data has been cleared.');
         }
 
         async function initApp() {
             try {
-                await initDB().catch(err => { console.error('Failed to initialize database:', err); db = null; });
-                sharedFiles = await getAllSharedFiles().catch(err => { console.error('Failed to load shared files:', err); return {}; });
-                notificationLog = await getNotificationLog().catch(err => { console.error('Failed to load notification log:', err); return []; });
-                activityLog = await getActivityLog().catch(err => { console.error('Failed to load activity log:', err); return []; });
-                users = await getUsers().catch(err => { console.error('Failed to load users:', err); return {}; });
+                await initDB().catch(err => {
+                    console.error('Failed to initialize database:', err);
+                    db = null;
+                });
+
+                sharedFiles = await getAllSharedFiles().catch(err => {
+                    console.error('Failed to load shared files:', err);
+                    return {};
+                });
+                notificationLog = await getNotificationLog().catch(err => {
+                    console.error('Failed to load notification log:', err);
+                    return [];
+                });
+                users = await getUsers().catch(err => {
+                    console.error('Failed to load users:', err);
+                    return {};
+                });
 
                 if (Object.keys(users).length === 0) {
                     await addUserToDB('guest', '').catch(err => console.error('Failed to add guest user:', err));
-                    await addUserToDB('admin', '8080').catch(err => console.error('Failed to add admin user:', err));
-                    await addUserToDB('owner', '80').catch(err => console.error('Failed to add owner user:', err));
-                    users = await getUsers().catch(err => { console.error('Failed to reload users:', err); return {}; });
+                    await addUserToDB('admin', '8080', 'admin').catch(err => console.error('Failed to add admin user:', err));
+                    users = await getUsers().catch(err => {
+                        console.error('Failed to reload users:', err);
+                        return {};
+                    });
                 }
 
-                const userData = await getUserData(currentUser).catch(err => { console.error('Failed to load user data:', err); return { storageUsed: 0, isPremium: false, role: 'user' }; });
+                const userData = await getUserData(currentUser).catch(err => {
+                    console.error('Failed to load user data:', err);
+                    return { storageUsed: 0, isPremium: false, role: 'user' };
+                });
                 storageUsed = userData.storageUsed || 0;
                 isPremium = userData.isPremium || false;
                 maxStorage = isPremium ? 10 : 5;
@@ -903,7 +1026,7 @@
                 document.getElementById('currentUser').textContent = currentUser;
                 if (currentUser !== 'guest') {
                     document.getElementById('logoutBtn').classList.remove('hidden');
-                    document.getElementId('upgradeBtn').disabled = false;
+                    document.getElementById('upgradeBtn').disabled = false;
                 }
                 if (!users[currentUser]) {
                     currentUser = 'guest';
@@ -916,7 +1039,6 @@
                 updateNotificationLog();
                 updateUserList();
                 updateStorageDisplay();
-                updateActivityLog();
                 if (isPremium) {
                     document.getElementById('premiumStatusText').textContent = 'Upgraded';
                     document.getElementById('premiumContent').classList.remove('hidden');
@@ -924,33 +1046,14 @@
                 } else {
                     document.getElementById('premiumContent').classList.add('hidden');
                 }
-                if (Notification.permission === 'default') requestNotificationPermission();
-                else if (Notification.permission === 'granted') {
+                if (Notification.permission === 'default') {
+                    requestNotificationPermission();
+                } else if (Notification.permission === 'granted') {
                     notificationsEnabled = true;
                     localStorage.setItem('notificationsEnabled', 'true');
                 }
-
-                // Initialize WebSocket for notifications
-                ws = new WebSocket('ws://localhost:8080');
-                ws.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'notification') {
-                        showGlobalNotification(data.message);
-                    }
-                };
-
-                // Check URL for share link and activate Sharing Code tab
-                const urlParams = new URLSearchParams(window.location.search);
-                const code = urlParams.get('code');
-                if (code && sharedFiles[code]) {
-                    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-                    const sharingTab = document.querySelector('[data-tab="sharing"]');
-                    sharingTab.classList.add('active');
-                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                    document.getElementById('sharing').classList.add('active');
-                    document.getElementById('sharingCodeInput').value = code;
-                    accessSharedFiles();
-                }
+                updateActivityDashboard();
+                trackUserActivity();
             } catch (error) {
                 console.error('Failed to init app:', error);
             }
@@ -961,23 +1064,39 @@
             userList.innerHTML = '';
             for (const user in users) {
                 const li = document.createElement('li');
-                li.textContent = user;
+                li.textContent = `${user} (${users[user].role || 'user'})`;
                 userList.appendChild(li);
             }
         }
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); fileInput.files = e.dataTransfer.files; displaySelectedFiles(); });
-        dropZone.querySelector('button').addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            displaySelectedFiles();
+        });
+        dropZone.querySelector('button').addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
 
         function displaySelectedFiles() {
             const files = fileInput.files;
             const selectedFileList = document.getElementById('selectedFileList');
             const selectedFilesSection = document.getElementById('selectedFiles');
+
             if (files.length === 0) return;
+
             selectedFiles = Array.from(files);
             selectedFileList.innerHTML = '';
             selectedFiles.forEach(file => {
@@ -985,27 +1104,48 @@
                 li.textContent = file.name;
                 selectedFileList.appendChild(li);
             });
+
             selectedFilesSection.classList.remove('hidden');
         }
 
         async function uploadSelectedFiles() {
-            if (!db) { alert('Database not available. Please host on a server with HTTPS.'); return; }
+            if (!db) {
+                alert('Database not available. Please host on a server with HTTPS for full functionality.');
+                return;
+            }
             const fileList = document.getElementById('fileList');
             const shareableLinks = document.querySelector('.shareable-links');
             const shareLink = document.getElementById('shareLink');
             const shareCode = document.getElementById('shareCode');
             const selectedFilesSection = document.getElementById('selectedFiles');
+
             if (selectedFiles.length === 0) return;
+
             const totalSize = selectedFiles.reduce((acc, file) => acc + file.size, 0) / (1024 * 1024 * 1024);
-            if (storageUsed + totalSize > globalStorageLimit + adStorageBonus) { alert('Not enough storage! Watch an ad.'); return; }
-            const sharingCode = Math.random().toString(36).substring(2, 10);
-            shareLink.value = `${window.location.origin}/?code=${sharingCode}`; // Updated to include code as query param
+            if (storageUsed + totalSize > globalStorageLimit + adStorageBonus) {
+                alert('Not enough storage available! Watch an ad for more storage.');
+                return;
+            }
+
+            const sharingCode = Math.random().toString(36).substring(2, 11).toUpperCase(); // Unique 9-char code
+            shareLink.value = `${window.location.origin}/share/${sharingCode}`; // Dynamic URL
             shareCode.value = sharingCode;
-            uploadedFiles = selectedFiles.map(file => ({ name: file.name, code: sharingCode, size: file.size / (1024 * 1024 * 1024) }));
-            await saveSharedFile(sharingCode, uploadedFiles).catch(err => { console.error('Failed to save:', err); alert('Upload failed.'); return; });
+
+            uploadedFiles = selectedFiles.map(file => ({
+                name: file.name,
+                code: sharingCode,
+                size: file.size / (1024 * 1024 * 1024)
+            }));
+
+            await saveSharedFile(sharingCode, uploadedFiles).catch(err => {
+                console.error('Failed to save shared file:', err);
+                alert('Failed to upload files. Check console for details.');
+                return;
+            });
             sharedFiles[sharingCode] = uploadedFiles;
             storageUsed += totalSize;
             await saveUserData(currentUser, { storageUsed, isPremium }).catch(err => console.error('Failed to save user data:', err));
+
             fileList.innerHTML = '';
             uploadedFiles.forEach(file => {
                 const li = document.createElement('div');
@@ -1013,75 +1153,50 @@
                 li.innerHTML = `${file.name} (${file.size.toFixed(2)} GB) <a href="#">Download ⬇️</a>`;
                 fileList.appendChild(li);
             });
+
             shareableLinks.classList.remove('hidden');
             selectedFilesSection.classList.add('hidden');
             selectedFiles = [];
             fileInput.value = '';
             updateStorageDisplay();
-            await addActivityLog(`${currentUser} uploaded ${totalSize.toFixed(2)} GB`);
-            sendNotification('Upload Complete', `Files uploaded with code: ${sharingCode} (${totalSize.toFixed(2)} GB)`);
+
+            sendNotification('Upload Complete', `Files uploaded with sharing code: ${sharingCode} (${totalSize.toFixed(2)} GB)`);
         }
 
         async function accessSharedFiles() {
             const sharingCodeInput = document.getElementById('sharingCodeInput');
             const sharedFileList = document.getElementById('sharedFileList');
             const sharedFilesSection = document.querySelector('.shared-files');
-            const code = sharingCodeInput.value.trim();
+            const code = sharingCodeInput.value.trim().toUpperCase();
 
-            // Try API validation first
-            try {
-                const response = await fetch(`http://localhost:8080/api/validate-code?code=${code}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            if (!code) {
+                alert('Please enter a sharing code.');
+                return;
+            }
+
+            const validity = await getShareCodeValidity(code).catch(err => {
+                console.error('Failed to check code validity:', err);
+                return null;
+            });
+
+            if (!validity || new Date() > new Date(validity.validUntil)) {
+                alert('Invalid or expired sharing code.');
+                return;
+            }
+
+            const files = sharedFiles[code] || (await getAllSharedFiles())[code];
+            if (files && files.length > 0) {
+                sharedFilesSection.classList.remove('hidden');
+                sharedFileList.innerHTML = '';
+                files.forEach(file => {
+                    const li = document.createElement('div');
+                    li.className = 'file-item';
+                    li.innerHTML = `${file.name} (${file.size ? file.size.toFixed(2) : '0'} GB) <a href="#">Download ⬇️</a>`;
+                    sharedFileList.appendChild(li);
                 });
-                const data = await response.json();
-
-                if (!response.ok || !data.valid) {
-                    throw new Error('Invalid code from API');
-                }
-
-                // If API validates, proceed with local data
-                if (sharedFiles[code] || (db && sharedFiles[code] === undefined)) {
-                    const files = await getAllSharedFiles();
-                    if (files[code]) {
-                        sharedFilesSection.classList.remove('hidden');
-                        sharedFileList.innerHTML = '';
-                        files[code].forEach(file => {
-                            const li = document.createElement('div');
-                            li.className = 'file-item';
-                            li.innerHTML = `${file.name} (${file.size ? file.size.toFixed(2) : '0'} GB) <a href="#">Download ⬇️</a>`;
-                            sharedFileList.appendChild(li);
-                        });
-                        sendNotification('Files Accessed', `Accessed files with code: ${code}`);
-                    } else {
-                        alert('Invalid code');
-                    }
-                } else {
-                    alert('Invalid code');
-                }
-            } catch (error) {
-                console.warn('API validation failed, falling back to local check:', error.message);
-                // Fallback to local IndexedDB check if API fails
-                if (sharedFiles[code] || (db && sharedFiles[code] === undefined)) {
-                    const files = await getAllSharedFiles();
-                    if (files[code]) {
-                        sharedFilesSection.classList.remove('hidden');
-                        sharedFileList.innerHTML = '';
-                        files[code].forEach(file => {
-                            const li = document.createElement('div');
-                            li.className = 'file-item';
-                            li.innerHTML = `${file.name} (${file.size ? file.size.toFixed(2) : '0'} GB) <a href="#">Download ⬇️</a>`;
-                            sharedFileList.appendChild(li);
-                        });
-                        sendNotification('Files Accessed', `Accessed files with code: ${code} (local fallback)`);
-                    } else {
-                        alert('Invalid code');
-                    }
-                } else {
-                    alert('Invalid code and no local data found');
-                }
+                sendNotification('Files Accessed', `Accessed files with sharing code: ${code}`);
+            } else {
+                alert('Invalid sharing code or no files found.');
             }
         }
 
@@ -1092,7 +1207,9 @@
                 adminControls.classList.remove('hidden');
                 isAdmin = true;
                 sendNotification('Admin Access', 'Admin panel accessed.');
-            } else alert('Invalid password');
+            } else {
+                alert('Invalid admin password');
+            }
         }
 
         function accessOwner() {
@@ -1101,7 +1218,9 @@
             if (ownerPassword === '80') {
                 ownerControls.classList.remove('hidden');
                 sendNotification('Owner Access', 'Owner panel accessed.');
-            } else alert('Invalid password');
+            } else {
+                alert('Invalid owner password');
+            }
         }
 
         function addUser() {
@@ -1109,13 +1228,17 @@
             const password = document.getElementById('addPassword').value;
             if (username && password && !users[username]) {
                 addUserToDB(username, password).then(() => {
-                    users[username] = password;
+                    users[username] = { password, role: 'user' };
                     saveUserData(username, { storageUsed: 0, isPremium: false, role: 'user' });
                     updateUserList();
-                    alert('User added!');
-                    addActivityLog(`Owner added user ${username}`);
-                }).catch(err => { console.error('Failed to add:', err); alert('Failed to add user.'); });
-            } else alert('Invalid or existing username');
+                    alert('User added successfully!');
+                }).catch(err => {
+                    console.error('Failed to add user:', err);
+                    alert('Failed to add user. Check console for details.');
+                });
+            } else {
+                alert('Invalid or existing username');
+            }
         }
 
         function deleteUser() {
@@ -1123,13 +1246,17 @@
             if (users[username] && username !== 'guest') {
                 deleteUserFromDB(username).then(() => {
                     delete users[username];
-                    saveUserData(username, null);
+                    saveUserData(username, null); // Remove user data
                     updateUserList();
-                    alert(`User ${username} deleted!`);
-                    addActivityLog(`Owner deleted user ${username}`);
+                    alert(`User ${username} deleted successfully!`);
                     sendNotification('User Deleted', `${username} has been removed.`);
-                }).catch(err => { console.error('Failed to delete:', err); alert('Failed to delete user.'); });
-            } else alert('Cannot delete guest or invalid user.');
+                }).catch(err => {
+                    console.error('Failed to delete user:', err);
+                    alert('Failed to delete user. Check console for details.');
+                });
+            } else {
+                alert('Cannot delete guest or invalid user.');
+            }
         }
 
         function setGlobalStorageLimit() {
@@ -1137,34 +1264,30 @@
             if (limit > 0) {
                 globalStorageLimit = limit;
                 updateStorageDisplay();
-                alert(`Limit set to ${limit} TB!`);
-                addActivityLog(`Owner set global storage limit to ${limit} TB`);
+                alert(`Global storage limit set to ${limit} TB!`);
                 sendNotification('Storage Limit Updated', `New limit: ${limit} TB`);
-            } else alert('Enter a valid limit > 0.');
+            } else {
+                alert('Please enter a valid limit greater than 0.');
+            }
         }
 
         function sendCustomNotification() {
             const message = document.getElementById('customNotification').value;
-            if (message && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'notification', message }));
+            if (message) {
+                sendNotification('Custom Message', message);
                 alert('Notification sent to all users!');
-                addActivityLog(`Owner sent notification: ${message}`);
-            } else alert('WebSocket not connected or no message.');
-        }
-
-        function showGlobalNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.style.display = 'block';
-            setTimeout(() => notification.style.display = 'none', 5000);
+            } else {
+                alert('Please enter a message.');
+            }
         }
 
         function optimizeDatabase() {
             if (db) {
-                alert('Database optimized (simulated).');
-                addActivityLog('Owner optimized database');
+                alert('Database optimized (simulated). Performance may improve.');
                 sendNotification('Database Optimized', 'Database has been optimized.');
-            } else alert('Database not available.');
+            } else {
+                alert('Database not available for optimization.');
+            }
         }
 
         function updateStorageDisplay() {
@@ -1191,8 +1314,7 @@
             a.download = `goffle_backup_${new Date().toISOString()}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            document.getElementById('backupStatus').textContent = 'Backup created!';
-            addActivityLog('Owner created backup');
+            document.getElementById('backupStatus').textContent = 'Backup created successfully!';
             sendNotification('Backup Created', 'Backup file downloaded.');
         }
 
@@ -1205,39 +1327,35 @@
             a.download = `goffle_advanced_backup_${new Date().toISOString()}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            document.getElementById('advancedBackupStatus').textContent = 'Advanced backup created!';
-            addActivityLog('Owner created advanced backup');
+            document.getElementById('advancedBackupStatus').textContent = 'Advanced backup created successfully!';
             sendNotification('Advanced Backup Created', 'Advanced backup file downloaded.');
         }
 
         function runSecurityAudit() {
             const result = 'Audit completed: No vulnerabilities found (simulated)';
             document.getElementById('auditResult').textContent = result;
-            addActivityLog('Owner ran security audit');
             sendNotification('Security Audit', result);
         }
 
         function resetSystem() {
-            if (confirm('Are you sure? This will delete all data.')) {
+            if (confirm('Are you sure you want to reset the entire system? This will delete all data.')) {
                 clearStorage();
                 localStorage.clear();
-                document.getElementById('resetLog').textContent = 'System reset at ' + new Date().toISOString();
-                addActivityLog('Owner reset system');
                 location.reload();
                 sendNotification('System Reset', 'System has been reset.');
             }
         }
 
         function configureServer() {
-            document.getElementById('serverStatus').textContent = 'Status: Configured (simulated)';
-            addActivityLog('Owner configured server');
+            alert('Server configured (simulated). Advanced settings applied.');
             sendNotification('Server Configured', 'Server settings updated.');
         }
 
         function requestNotificationPermission() {
-            if (!("Notification" in window)) console.log("Browser does not support notifications");
-            else if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                Notification.requestPermission().then(permission => {
+            if (!("Notification" in window)) {
+                console.log("This browser does not support desktop notification");
+            } else if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission().then(function (permission) {
                     if (permission === "granted") {
                         notificationsEnabled = true;
                         localStorage.setItem('notificationsEnabled', 'true');
@@ -1248,10 +1366,15 @@
 
         function sendNotification(title, body) {
             showToast(title, body);
-            if (notificationsEnabled) new Notification(title, { body });
-            addNotification(`${new Date().toISOString()} - ${title}: ${body}`).then(() => {
-                getNotificationLog().then(log => { notificationLog = log; updateNotificationLog(); });
-            }).catch(err => console.error('Failed to log:', err));
+            if (notificationsEnabled) {
+                new Notification(title, { body });
+            }
+            addNotification(`${new Date().toLocaleString()} - ${title}: ${body}`).then(() => {
+                getNotificationLog().then(log => {
+                    notificationLog = log;
+                    updateNotificationLog();
+                }).catch(err => console.error('Failed to update notification log:', err));
+            }).catch(err => console.error('Failed to log notification:', err));
         }
 
         function updateNotificationLog() {
@@ -1270,54 +1393,80 @@
             toast.innerHTML = `<h4 class="text-md mb-1">${title}</h4><p>${body}</p>`;
             document.getElementById('toastContainer').appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 100);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 5000);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
         }
 
         function copyLink() {
             const shareLink = document.getElementById('shareLink');
             shareLink.select();
             document.execCommand('copy');
-            alert('Link copied!');
+            alert('Link copied to clipboard!');
         }
 
         function copyCode() {
             const shareCode = document.getElementById('shareCode');
             shareCode.select();
             document.execCommand('copy');
-            alert('Code copied!');
+            alert('Code copied to clipboard!');
         }
 
-        function showLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
-        function hideLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
         function submitLogin() {
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
-            if (users[username] && users[username] === password) {
+            if (users[username] && users[username].password === password) {
                 currentUser = username;
                 localStorage.setItem('currentUser', currentUser);
                 document.getElementById('currentUser').textContent = currentUser;
                 document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementId('upgradeBtn').disabled = false;
+                document.getElementById('upgradeBtn').disabled = false;
                 hideLoginModal();
-                alert('Logged in!');
-                getUserData(currentUser).then(data => { isPremium = data.isPremium || false; maxStorage = isPremium ? 10 : 5; updateStorageDisplay(); });
-            } else alert('Invalid credentials');
+                alert('Logged in successfully!');
+                const userData = getUserData(currentUser).then(data => {
+                    isPremium = data.isPremium || false;
+                    maxStorage = isPremium ? 10 : 5;
+                    updateStorageDisplay();
+                });
+            } else {
+                alert('Invalid credentials');
+            }
         }
 
-        function showAddAccountModal() { document.getElementById('addAccountModal').style.display = 'flex'; }
-        function hideAddAccountModal() { document.getElementById('addAccountModal').style.display = 'none'; }
+        function showAddAccountModal() {
+            document.getElementById('addAccountModal').style.display = 'flex';
+        }
+
+        function hideAddAccountModal() {
+            document.getElementById('addAccountModal').style.display = 'none';
+        }
+
         function submitAddAccount() {
             const username = document.getElementById('addUsername').value;
             const password = document.getElementById('addPassword').value;
             if (username && password) {
                 addUserToDB(username, password).then(() => {
-                    users[username] = password;
+                    users[username] = { password, role: 'user' };
                     saveUserData(username, { storageUsed: 0, isPremium: false, role: 'user' });
                     updateUserList();
-                    alert('Account added!');
+                    alert('Account added successfully!');
                     hideAddAccountModal();
-                }).catch(err => { console.error('Failed to add:', err); alert('Failed to add account.'); });
-            } else alert('Enter username and password.');
+                }).catch(err => {
+                    console.error('Failed to add account:', err);
+                    alert('Failed to add account. Check console for details.');
+                });
+            } else {
+                alert('Please enter a username and password.');
+            }
         }
 
         function logout() {
@@ -1332,27 +1481,37 @@
             document.getElementById('upgradeBtn').disabled = true;
             document.getElementById('premiumStatusText').textContent = 'Not Upgraded';
             document.getElementById('premiumContent').classList.add('hidden');
-            alert('Logged out!');
+            alert('Logged out successfully!');
         }
 
         function showPaymentModal() {
-            if (currentUser === 'guest') { alert('Please login to upgrade.'); return; }
+            if (currentUser === 'guest') {
+                alert('Please login to upgrade to premium.');
+                return;
+            }
             document.getElementById('paymentModal').style.display = 'flex';
         }
-        function hidePaymentModal() { document.getElementById('paymentModal').style.display = 'none'; }
-        function simulatePayment() { hidePaymentModal(); upgradePremium(); }
+
+        function hidePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        function simulatePayment() {
+            hidePaymentModal();
+            upgradePremium();
+        }
 
         async function upgradePremium() {
             isPremium = true;
             maxStorage = 10;
             localStorage.setItem('isPremium', 'true');
-            await saveUserData(currentUser, { storageUsed, isPremium }).catch(err => console.error('Failed to save:', err));
+            await saveUserData(currentUser, { storageUsed, isPremium }).catch(err => console.error('Failed to save premium status:', err));
             document.getElementById('premiumStatusText').textContent = 'Upgraded';
             document.getElementById('premiumContent').classList.remove('hidden');
             document.getElementById('maxStorage').textContent = '10 TB';
             updateStorageDisplay();
             sendNotification('Premium Upgraded', 'You now have 10 TB storage!');
-            alert('Upgraded to Premium!');
+            alert('Upgraded to Premium successfully!');
         }
 
         function uploadLargeFile() {
@@ -1362,10 +1521,12 @@
                 const li = document.createElement('li');
                 li.textContent = `${largeFileName} (10 GB)`;
                 document.getElementById('largeFiles').appendChild(li);
-                saveUserData(currentUser, { storageUsed, isPremium }).catch(err => console.error('Failed to save:', err));
+                saveUserData(currentUser, { storageUsed, isPremium }).catch(err => console.error('Failed to save user data:', err));
                 updateStorageDisplay();
-                sendNotification('Large File Uploaded', `${largeFileName} uploaded (simulated 10 GB).`);
-            } else alert('Not enough storage for 10 TB!');
+                sendNotification('Large File Uploaded', `${largeFileName} uploaded successfully (simulated 10 GB).`);
+            } else {
+                alert('Not enough storage for a 10 TB file!');
+            }
         }
 
         function clearAllFiles() {
@@ -1388,96 +1549,78 @@
 
         document.getElementById('storageButton').addEventListener('click', () => {
             if (adStorageBonus === 0) {
-                if (confirm('Watch an ad for 2 TB?')) {
+                if (confirm('Watch an ad for 2 more terabytes?')) {
                     adStorageBonus += 2;
                     updateStorageDisplay();
-                    sendNotification('Storage Increased', 'Gained 2 TB from ad!');
-                    alert('Gained 2 TB!');
+                    sendNotification('Storage Increased', 'You gained 2 TB from watching an ad!');
+                    alert('You have gained 2 additional terabytes!');
                 }
-            } else alert('Already watched an ad this session.');
+            } else {
+                alert('You’ve already watched an ad this session for extra storage.');
+            }
         });
 
         function toggleTheme() {
             const body = document.body;
             const currentTheme = body.className;
-            if (currentTheme === 'dark') body.className = 'light';
-            else if (currentTheme === 'light') body.className = 'hacker';
-            else body.className = 'dark';
-        }
-
-        function viewActivityLog() {
-            getActivityLog().then(log => {
-                document.getElementById('activityLog').textContent = log.join('\n');
-            }).catch(err => console.error('Failed to load log:', err));
+            if (currentTheme === 'dark') {
+                body.className = 'light';
+            } else if (currentTheme === 'light') {
+                body.className = 'hacker';
+            } else {
+                body.className = 'dark';
+            }
         }
 
         function assignRole() {
             const username = document.getElementById('roleUsername').value;
-            const role = document.getElementById('roleName').value;
-            if (username && role && users[username]) {
-                saveUserData(username, { role }).then(() => {
-                    document.getElementById('roleStatus').textContent = `${username} assigned role ${role}`;
-                    addActivityLog(`Owner assigned role ${role} to ${username}`);
-                }).catch(err => { console.error('Failed to assign role:', err); document.getElementById('roleStatus').textContent = 'Failed to assign role'; });
-            } else document.getElementById('roleStatus').textContent = 'Invalid username or role';
+            const role = document.getElementById('roleSelect').value;
+            if (users[username]) {
+                users[username].role = role;
+                saveUserData(username, { ...getUserData(username), role }).catch(err => console.error('Failed to update role:', err));
+                updateUserList();
+                alert(`Role for ${username} updated to ${role}!`);
+                sendNotification('Role Updated', `${username}'s role is now ${role}.`);
+            } else {
+                alert('User not found.');
+            }
         }
 
-        function updateActivityLog() {
-            getActivityLog().then(log => { activityLog = log; });
+        function broadcastNotification() {
+            const message = document.getElementById('globalMessage').value;
+            if (message) {
+                document.getElementById('globalMessageText').textContent = message;
+                document.getElementById('globalNotification').style.display = 'block';
+                setTimeout(() => document.getElementById('globalNotification').style.display = 'none', 10000);
+                sendNotification('Global Notification', message);
+                alert('Notification broadcasted to all users!');
+            } else {
+                alert('Please enter a message.');
+            }
         }
 
-        function encryptFile() {
-            const fileInput = document.getElementById('encryptFile');
-            const shift = parseInt(document.getElementById('shiftKey').value);
-            if (fileInput.files.length && shift >= 1 && shift <= 25) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    const encrypted = caesarCipher(text, shift);
-                    const blob = new Blob([encrypted], { type: file.type });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `encrypted_${file.name}`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    document.getElementById('cryptoStatus').textContent = 'File encrypted!';
-                    addActivityLog(`Owner encrypted file ${file.name}`);
-                };
-                reader.readAsText(file);
-            } else document.getElementById('cryptoStatus').textContent = 'Select a file and valid shift key (1-25)';
+        function hideGlobalNotification() {
+            document.getElementById('globalNotification').style.display = 'none';
         }
 
-        function decryptFile() {
-            const fileInput = document.getElementById('encryptFile');
-            const shift = parseInt(document.getElementById('shiftKey').value);
-            if (fileInput.files.length && shift >= 1 && shift <= 25) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    const decrypted = caesarCipher(text, 26 - shift); // Reverse shift
-                    const blob = new Blob([decrypted], { type: file.type });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `decrypted_${file.name}`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    document.getElementById('cryptoStatus').textContent = 'File decrypted!';
-                    addActivityLog(`Owner decrypted file ${file.name}`);
-                };
-                reader.readAsText(file);
-            } else document.getElementById('cryptoStatus').textContent = 'Select a file and valid shift key (1-25)';
+        function checkServerStatus() {
+            const status = 'Server is running (simulated)';
+            document.getElementById('serverStatus').textContent = `Status: ${status}`;
+            sendNotification('Server Status', status);
         }
 
-        function caesarCipher(str, shift) {
-            return str.replace(/[a-zA-Z]/g, c => {
-                const code = c.charCodeAt(0);
-                const base = (code >= 65 && code <= 90) ? 65 : 97;
-                return String.fromCharCode(((code - base + shift) % 26) + base);
-            });
+        function updateActivityDashboard() {
+            document.getElementById('activeUsers').textContent = `Active Users: ${activeUsers.size}`;
+            document.getElementById('pageVisits').textContent = `Page Visits: ${pageVisitCount}`;
+        }
+
+        function trackUserActivity() {
+            pageVisitCount++;
+            if (currentUser !== 'guest') {
+                activeUsers.add(currentUser);
+            }
+            updateActivityDashboard();
+            setTimeout(trackUserActivity, 5000); // Update every 5 seconds
         }
     </script>
 </body>
